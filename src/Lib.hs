@@ -2,10 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Lib
-    ( startApp
-    , app
-    ) where
+module Lib where
 
 import Data.Aeson
 import Data.Aeson.TH
@@ -30,7 +27,7 @@ getUsers = return users
 
 getUserById :: Int -> Handler User
 getUserById n = do 
-    maybeUser <- findUserById n
+    let maybeUser = findUserById n
     case maybeUser of
       Just user -> return user
       Nothing -> Handler $ (throwE $ err404 { errBody = "Could not find user with that ID" })
@@ -39,27 +36,22 @@ getUserById n = do
 findUserById :: Int -> Maybe User
 findUserById n = find (\(User userId _ _) -> userId == n) users
 
-type API = "users" :> Get '[JSON] [User]
-  :<|> "user" :> Capture "userid" Integer :> Get '[JSON] User
+type UsersApi = "users" :> Get '[JSON] [User]
+  :<|> "user" :> Capture "userid" Int :> Get '[JSON] User
 
-startApp :: IO ()
-startApp = run 8080 app
 
-app :: Application
-app = serve api server
-
-api :: Proxy API
-api = Proxy
-
-server :: Server API
-server = return getUserById 
-         :<|> getUsers
+usersServer :: Server UsersApi
+usersServer = getUsers
+         :<|> getUserById
 
 users :: [User]
 users = [ User 1 "Isaac" "Newton"
         , User 2 "Albert" "Einstein"
         ]
 
+usersAPI :: Proxy UsersApi
+usersAPI = Proxy :: Proxy UsersApi
 
-
-
+runServer :: IO ()
+runServer = do
+  run 8000 (serve usersAPI (usersServer))
