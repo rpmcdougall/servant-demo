@@ -10,9 +10,7 @@ import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
 import Data.List
-import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Except (throwE)
-
 data User = User
   { userId        :: Int
   , userFirstName :: String
@@ -30,7 +28,7 @@ getUserById n = do
     let maybeUser = findUserById n
     case maybeUser of
       Just user -> return user
-      Nothing -> Handler $ (throwE $ err404 { errBody = "Could not find user with that ID" })
+      Nothing -> Handler $ (throwE $ err404 { errBody = "Could not find user with that ID"})
 
 
 findUserById :: Int -> Maybe User
@@ -54,4 +52,5 @@ usersAPI = Proxy :: Proxy UsersApi
 
 runServer :: IO ()
 runServer = do
+  putStrLn "Starting API on port: 8000"
   run 8000 (serve usersAPI (usersServer))
